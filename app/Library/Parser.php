@@ -23,13 +23,6 @@ class Parser
     protected $domXpath;
 
     /**
-     *
-     *
-     * @var \DOMDocument
-     */
-    protected $document;
-
-    /**
      * @param string $htmlContent
      */
     public function __construct($htmlContent)
@@ -89,10 +82,18 @@ class Parser
      */
     protected function init($htmlContent)
     {
+        /*
+         * 编码其中的类似实体字符。避免DOMDocument 解析时遇到发生错误，比如 &# 这个符号转换为 &amp;#
+         */
+        $htmlContent = str_replace('&#', '&amp;#', $htmlContent);
+
         $tidy = $this->getRepairedTidy($htmlContent);
-        $this->document = new \DOMDocument('1.0', 'utf-8');
-        $this->document
-            ->loadHTML('<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>' . (string)$tidy->body());
-        $this->domXpath = new \DOMXPath($this->document);
+        $document = new \DOMDocument('1.0', 'utf-8');
+
+        $source = '<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>' . (string)$tidy->body();
+        unset($tidy);
+        $document
+            ->loadHTML($source);
+        $this->domXpath = new \DOMXPath($document);
     }
 }

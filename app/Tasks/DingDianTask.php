@@ -32,6 +32,9 @@ class DingDianTask extends TaskBase
      */
     public function mainAction()
     {
+        /*
+         * 参数处理
+         */
         $options = $this->getOptions();
         if (0 === $this->parameter->countOptions()) {
             return $this->getInfoResponse($options);
@@ -42,15 +45,32 @@ class DingDianTask extends TaskBase
             return $this->getErrorResponse('无效的' . $options->getDescription('o'));
         }
 
-        $code = $this->parameter->getOption('c');
+        $code = $this->filter->sanitize($this->parameter->getOption('c'), 'int');
+        if (!$code) {
+            return $this->getErrorResponse('无效的' . $options->getDescription('c'));
+        }
         $tableOfContentsUri = self::NOVEL_SECTION_URI_PREFIX . $code;
         if (!filter_var($tableOfContentsUri, FILTER_VALIDATE_URL)) {
             return $this->getErrorResponse('无效的' . $options->getDescription('c'));
         }
+        $cleanCache = $this->parameter->getOption('-clean-cache', false);
 
+        /*
+         * 开始逻辑
+         */
         $dir = dirname($output) . "/{$code}_temp";
         $sectionHtmlTmpFileName = $dir . '/section.html';
         $crawl = new Crawl(new Crawl\Adapter\Curl(), $tableOfContentsUri . '/');
+
+        if ($cleanCache) {
+            stream_resolve_include_path($sectionHtmlTmpFileName) && unlink($sectionHtmlTmpFileName);
+            if (stream_resolve_include_path($dir)) {
+                /*
+                 * @todo 检查是否执行成功
+                 */
+                echo exec("rm -rf $dir");
+            }
+        }
 
         if (!stream_resolve_include_path($sectionHtmlTmpFileName)) {
             $crawl->run();
@@ -83,41 +103,56 @@ class DingDianTask extends TaskBase
             $link = $item->getAttribute('href');
             $sectionName = str_replace("\n", '', $item->nodeValue);
             $tmpFileName = $dir . '/' . $sectionName . '.html';
-            if (!stream_resolve_include_path($tmpFileName)) {
+            if (stream_resolve_include_path($tmpFileName)) {
+                $htmlContent = file_get_contents($tmpFileName);
+            } else {
                 $crawl->reset();
                 $crawl->setUri($tableOfContentsUri . '/' . $link);
                 $crawl->run();
                 if (!$crawl->isSuccess()) {
                     if (3 === $counter) {
+                        $splFileObject->fflush();
                         return $this->getErrorResponse("抓取{$sectionName}章节响应失败({$crawl->getHttpCode()}) 3次。中断");
                     }
                     $counter++;
                     echo Color::info("抓取{$sectionName}重试第{$counter}次");
                     continue;
+                } else {
+                    $counter = 0;
                 }
 
                 $htmlContent = $crawl->getContent();
                 if (!$htmlContent) {
                     if (3 === $counter) {
+                        $splFileObject->fflush();
                         return $this->getErrorResponse("抓取{$sectionName}章节内容为空3次。中断");
                     }
                     $counter++;
                     echo Color::info("抓取{$sectionName}重试第{$counter}次");
                     continue;
+                } else {
+                    $counter = 0;
                 }
                 file_put_contents($tmpFileName, $htmlContent);
-            } else {
-                $htmlContent = file_get_contents($tmpFileName);
             }
 
             $parser->reset();
-            $parser->setContent(mb_convert_encoding($htmlContent, 'UTF-8', 'GB18030'));
-            $htmlContent = $parser->query('//*[@id="contents"]');
-            if (!$htmlContent->valid()) {
+            $htmlContent = mb_convert_encoding($htmlContent, 'UTF-8', 'GB18030');
+            $parser->setContent($htmlContent);
+            $textContentNodeResult = $parser->query('//*[@id="contents"]');
+            if (!$textContentNodeResult->valid()) {
+                if (3 === $counter) {
+                    $splFileObject->fflush();
+                    return $this->getErrorResponse("{$sectionName} 章节没有获取到内容");
+                }
+                unlink($tmpFileName);
+                $counter++;
                 continue;
+            } else {
+                $counter = 0;
             }
             echo Color::info('完成: 100% : ' . $sectionName);
-            $sectionContent = $htmlContent->current()->nodeValue;
+            $sectionContent = $textContentNodeResult->current()->nodeValue;
             $titleWithMarkdownStyle = '###' . $sectionName;
             $splFileObject->fwrite($titleWithMarkdownStyle . PHP_EOL . $sectionContent . PHP_EOL . PHP_EOL);
             $sections->next();
@@ -137,6 +172,7 @@ class DingDianTask extends TaskBase
         $options = parent::getOptions();
         $options->add('o', '要输出小说内容的文件路径');
         $options->add('c', '小说目录页面的代号，比如URI是：http://www.23wx.com/book/298, 那么ID 就是298');
+        $options->add('-clean-cache', ' 清除抓取的页面缓存重新抓取');
         return $options;
     }
 }

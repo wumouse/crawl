@@ -26,6 +26,21 @@ if (!extension_loaded('phalcon')) {
  */
 const APP_PATH = 'app';
 
+set_error_handler(function ($errNo, $errStr, $errFile, $errLine, $errContext) {
+    switch ($errNo) {
+        case E_WARNING:
+            $errNoName = 'warning';
+            break;
+        case E_NOTICE:
+            $errNoName = 'notice';
+            break;
+        default:
+            $errNoName = 'unknown';
+    }
+    echo Color::error($errNoName. ':'. $errStr. $errFile. ':'. $errLine. PHP_EOL);
+    exit;
+});
+
 $loader = new Loader();
 $loader->registerNamespaces([
     'Tasks' => APP_PATH . '/Tasks',
