@@ -17,4 +17,11 @@ use Library\Response;
  */
 class Error extends Response
 {
+    /**
+     * @return int
+     */
+    public function getCode()
+    {
+        return 1;
+    }
 }

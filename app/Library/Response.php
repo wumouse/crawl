@@ -21,12 +21,13 @@ class Response implements ResponseInterface
      * @var string
      */
     protected $content;
+
     /**
      * 错误代码
      *
      * @var int
      */
-    protected $code;
+    protected $code = 0;
 
     /**
      * @param string $content
