@@ -66,6 +66,11 @@ try {
 
     exit($response->getCode());
 } catch (Exception $e) {
-    echo Color::error($e);
+    $debug = $parameter->getOption('-debug');
+    if ('1' === $debug) {
+        echo Color::error($e);
+    } else {
+        echo Color::error($e->getMessage());
+    }
     exit($e->getCode());
 }
