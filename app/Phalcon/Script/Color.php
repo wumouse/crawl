@@ -25,11 +25,11 @@ namespace Phalcon\Script;
  *
  * Allows to generate messages using colors on xterm, ddterm, linux, etc.
  *
- * @category 	Phalcon
- * @package 	Script
+ * @category    Phalcon
+ * @package    Script
  * @subpackage  Color
  * @copyright   Copyright (c) 2011-2014 Phalcon Team (team@phalconphp.com)
- * @license 	New BSD License
+ * @license    New BSD License
  */
 final class Color
 {
@@ -73,36 +73,36 @@ final class Color
     /**
      * @var array Map of supported foreground colors
      */
-    private static $_fg = array (
-        self::FG_BLACK        => '0;30',
-        self::FG_DARK_GRAY    => '1;30',
-        self::FG_RED          => '0;31',
-        self::FG_LIGHT_RED    => '1;31',
-        self::FG_GREEN        => '0;32',
-        self::FG_LIGHT_GREEN  => '1;32',
-        self::FG_BROWN        => '0;33',
-        self::FG_YELLOW       => '1;33',
-        self::FG_BLUE         => '0;34',
-        self::FG_LIGHT_BLUE   => '1;34',
-        self::FG_PURPLE       => '0;35',
+    private static $_fg = array(
+        self::FG_BLACK => '0;30',
+        self::FG_DARK_GRAY => '1;30',
+        self::FG_RED => '0;31',
+        self::FG_LIGHT_RED => '1;31',
+        self::FG_GREEN => '0;32',
+        self::FG_LIGHT_GREEN => '1;32',
+        self::FG_BROWN => '0;33',
+        self::FG_YELLOW => '1;33',
+        self::FG_BLUE => '0;34',
+        self::FG_LIGHT_BLUE => '1;34',
+        self::FG_PURPLE => '0;35',
         self::FG_LIGHT_PURPLE => '1;35',
-        self::FG_CYAN         => '0;36',
-        self::FG_LIGHT_CYAN   => '1;36',
-        self::FG_LIGHT_GRAY   => '0;37',
-        self::FG_WHITE        => '1;37',
+        self::FG_CYAN => '0;36',
+        self::FG_LIGHT_CYAN => '1;36',
+        self::FG_LIGHT_GRAY => '0;37',
+        self::FG_WHITE => '1;37',
     );
 
     /**
      * @var array Map of supported background colors
      */
     private static $_bg = array(
-        self::BG_BLACK      => '40',
-        self::BG_RED        => '41',
-        self::BG_GREEN      => '42',
-        self::BG_YELLOW     => '43',
-        self::BG_BLUE       => '44',
-        self::BG_MAGENTA    => '45',
-        self::BG_CYAN       => '46',
+        self::BG_BLACK => '40',
+        self::BG_RED => '41',
+        self::BG_GREEN => '42',
+        self::BG_YELLOW => '43',
+        self::BG_BLUE => '44',
+        self::BG_MAGENTA => '45',
+        self::BG_CYAN => '46',
         self::BG_LIGHT_GRAY => '47',
     );
 
@@ -110,16 +110,16 @@ final class Color
      * @var array Map of supported attributes
      */
     private static $_at = array(
-        self::AT_NORMAL    => '0',
-        self::AT_BOLD      => '1',
-        self::AT_ITALIC    => '3',
+        self::AT_NORMAL => '0',
+        self::AT_BOLD => '1',
+        self::AT_ITALIC => '3',
         self::AT_UNDERLINE => '4',
-        self::AT_BLINK     => '5',
-        self::AT_OUTLINE   => '6',
-        self::AT_REVERSE   => '7',
-        self::AT_NONDISP   => '8',
-        self::AT_STRIKE    => '9',
-);
+        self::AT_BLINK => '5',
+        self::AT_OUTLINE => '6',
+        self::AT_REVERSE => '7',
+        self::AT_NONDISP => '8',
+        self::AT_STRIKE => '9',
+    );
 
     /**
      * Supported terminals
@@ -132,28 +132,9 @@ final class Color
         'xterm-color' => true,
     );
 
-    /**
-     * Identify if console supports colors
-     *
-     * @return boolean
-     */
-    public static function isSupportedShell()
+    public static function head($msg)
     {
-        $flag = false;
-
-        if (isset($_ENV['TERM'])) {
-            if (isset(self::$_supportedShells[$_ENV['TERM']])) {
-                $flag = true;
-            }
-        } else {
-            if (isset($_SERVER['TERM'])) {
-                if (isset(self::$_supportedShells[$_SERVER['TERM']])) {
-                    $flag = true;
-                }
-            }
-        }
-
-        return $flag;
+        return static::colorize($msg, Color::FG_BROWN);
     }
 
     /**
@@ -192,14 +173,33 @@ final class Color
         }
 
         // Add string and end coloring
-        $colored .=  $string . "\033[0m";
+        $colored .= $string . "\033[0m";
 
         return $colored;
     }
 
-    public static function head($msg)
+    /**
+     * Identify if console supports colors
+     *
+     * @return boolean
+     */
+    public static function isSupportedShell()
     {
-        return static::colorize($msg, Color::FG_BROWN);
+        $flag = false;
+
+        if (isset($_ENV['TERM'])) {
+            if (isset(self::$_supportedShells[$_ENV['TERM']])) {
+                $flag = true;
+            }
+        } else {
+            if (isset($_SERVER['TERM'])) {
+                if (isset(self::$_supportedShells[$_SERVER['TERM']])) {
+                    $flag = true;
+                }
+            }
+        }
+
+        return $flag;
     }
 
     /**
@@ -213,7 +213,7 @@ final class Color
     {
         $msg = 'Error: ' . $msg;
         $space = strlen($msg) + 4;
-        $out  = static::colorize(str_pad(' ', $space), Color::FG_WHITE, Color::AT_BOLD, Color::BG_RED) . PHP_EOL;
+        $out = static::colorize(str_pad(' ', $space), Color::FG_WHITE, Color::AT_BOLD, Color::BG_RED) . PHP_EOL;
         $out .= static::colorize('  ' . $msg . '  ', Color::FG_WHITE, Color::AT_BOLD, Color::BG_RED) . PHP_EOL;
         $out .= static::colorize(str_pad(' ', $space), Color::FG_WHITE, Color::AT_BOLD, Color::BG_RED) . PHP_EOL;
 
@@ -231,7 +231,7 @@ final class Color
     {
         $msg = 'Success: ' . $msg;
         $space = strlen($msg) + 4;
-        $out  = static::colorize(str_pad(' ', $space), Color::FG_WHITE, Color::AT_BOLD, Color::BG_GREEN) . PHP_EOL;
+        $out = static::colorize(str_pad(' ', $space), Color::FG_WHITE, Color::AT_BOLD, Color::BG_GREEN) . PHP_EOL;
         $out .= static::colorize('  ' . $msg . '  ', Color::FG_WHITE, Color::AT_BOLD, Color::BG_GREEN) . PHP_EOL;
         $out .= static::colorize(str_pad(' ', $space), Color::FG_WHITE, Color::AT_BOLD, Color::BG_GREEN) . PHP_EOL;
 
@@ -249,7 +249,7 @@ final class Color
     {
         $msg = 'Info: ' . $msg;
         $space = strlen($msg) + 4;
-        $out  = static::colorize(str_pad(' ', $space), Color::FG_WHITE, Color::AT_BOLD, Color::BG_BLUE) . PHP_EOL;
+        $out = static::colorize(str_pad(' ', $space), Color::FG_WHITE, Color::AT_BOLD, Color::BG_BLUE) . PHP_EOL;
         $out .= static::colorize('  ' . $msg . '  ', Color::FG_WHITE, Color::AT_BOLD, Color::BG_BLUE) . PHP_EOL;
         $out .= static::colorize(str_pad(' ', $space), Color::FG_WHITE, Color::AT_BOLD, Color::BG_BLUE) . PHP_EOL;
 

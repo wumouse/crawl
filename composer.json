@@ -1,0 +1,14 @@
+{
+  "name": "wumouse/request-converter",
+  "description": "Converter request data file to every known format",
+  "minimum-stability": "dev",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "wumuose",
+      "email": "wumouse@qq.com"
+    }
+  ],
+  "require": {
+  }
+}
